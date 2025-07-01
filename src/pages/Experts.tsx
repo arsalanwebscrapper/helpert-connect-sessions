@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -16,12 +17,113 @@ const Experts = () => {
   const [priceRange, setPriceRange] = useState("all");
   const { user } = useAuth();
 
-  const { data: experts = [], isLoading } = useQuery({
+  const { data: experts = [], isLoading, error } = useQuery({
     queryKey: ['experts'],
-    queryFn: () => expertService.getExperts(),
+    queryFn: async () => {
+      console.log('Fetching experts...');
+      try {
+        const result = await expertService.getExperts();
+        console.log('Experts fetched:', result);
+        return result;
+      } catch (error) {
+        console.error('Error fetching experts:', error);
+        throw error;
+      }
+    },
   });
 
-  const categories = ["all", ...Array.from(new Set(experts.map(expert => expert.category)))];
+  console.log('Experts state:', { experts, isLoading, error });
+
+  // Create mock data if no experts are found (for development)
+  const mockExperts = experts.length === 0 && !isLoading ? [
+    {
+      id: 'mock-1',
+      user_id: 'mock-user-1',
+      category: 'Astrology',
+      specialization: 'Birth Chart Reading',
+      bio: 'Expert astrologer with 10+ years experience in birth chart interpretation and life guidance.',
+      experience_years: 10,
+      hourly_rate: 75,
+      availability_status: 'online' as const,
+      languages: ['English', 'Spanish'],
+      certifications: ['Certified Astrologer', 'Vedic Astrology'],
+      education: ['BA in Philosophy'],
+      expertise_areas: ['Birth Charts', 'Relationship Compatibility'],
+      total_sessions: 150,
+      average_rating: 4.8,
+      total_reviews: 45,
+      is_verified: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      user: {
+        id: 'mock-user-1',
+        email: 'astro@example.com',
+        full_name: 'Sarah Johnson',
+        role: 'expert' as const,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }
+    },
+    {
+      id: 'mock-2',
+      user_id: 'mock-user-2',
+      category: 'Mental Health',
+      specialization: 'Anxiety & Stress Management',
+      bio: 'Licensed therapist specializing in anxiety disorders and stress management techniques.',
+      experience_years: 8,
+      hourly_rate: 120,
+      availability_status: 'online' as const,
+      languages: ['English'],
+      certifications: ['Licensed Clinical Social Worker', 'CBT Certified'],
+      education: ['MSW Clinical Social Work'],
+      expertise_areas: ['Anxiety', 'Depression', 'Stress Management'],
+      total_sessions: 200,
+      average_rating: 4.9,
+      total_reviews: 67,
+      is_verified: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      user: {
+        id: 'mock-user-2',
+        email: 'therapist@example.com',
+        full_name: 'Dr. Michael Chen',
+        role: 'expert' as const,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }
+    },
+    {
+      id: 'mock-3',
+      user_id: 'mock-user-3',
+      category: 'Career Guidance',
+      specialization: 'Tech Career Transitions',
+      bio: 'Former tech executive now helping professionals navigate career changes and growth in technology.',
+      experience_years: 15,
+      hourly_rate: 100,
+      availability_status: 'busy' as const,
+      languages: ['English', 'French'],
+      certifications: ['Career Coach Certification', 'PMP'],
+      education: ['MBA Business Administration', 'BS Computer Science'],
+      expertise_areas: ['Career Transitions', 'Leadership', 'Tech Industry'],
+      total_sessions: 300,
+      average_rating: 4.7,
+      total_reviews: 89,
+      is_verified: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      user: {
+        id: 'mock-user-3',
+        email: 'career@example.com',
+        full_name: 'Emily Rodriguez',
+        role: 'expert' as const,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }
+    }
+  ] : experts;
+
+  const displayExperts = mockExperts;
+  const categories = ["all", ...Array.from(new Set(displayExperts.map(expert => expert.category)))];
   const priceRanges = [
     { value: "all", label: "All Prices" },
     { value: "0-50", label: "$0 - $50" },
@@ -30,7 +132,7 @@ const Experts = () => {
     { value: "100+", label: "$100+" }
   ];
 
-  const filteredExperts = experts.filter(expert => {
+  const filteredExperts = displayExperts.filter(expert => {
     const matchesSearch = expert.user?.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          expert.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          expert.specialization.toLowerCase().includes(searchTerm.toLowerCase());
@@ -52,6 +154,19 @@ const Experts = () => {
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading experts...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    console.error('Error in Experts component:', error);
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-500 text-lg mb-4">Failed to load experts</div>
+          <p className="text-gray-600 mb-4">There was an error loading the experts. Please try again.</p>
+          <Button onClick={() => window.location.reload()}>Retry</Button>
         </div>
       </div>
     );
@@ -103,6 +218,16 @@ const Experts = () => {
           <h1 className="text-3xl font-bold text-gray-900">Find Your Expert</h1>
         </div>
 
+        {/* Debug info (remove in production) */}
+        {experts.length === 0 && !isLoading && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+            <p className="text-yellow-800 text-sm">
+              <strong>Debug:</strong> No experts found in database. Showing mock data for demonstration.
+              {error && <span className="block mt-1">Error: {error.message}</span>}
+            </p>
+          </div>
+        )}
+
         {/* Search and Filters */}
         <div className="bg-white rounded-lg shadow-sm border p-6 mb-8">
           <div className="grid md:grid-cols-4 gap-4">
@@ -152,6 +277,7 @@ const Experts = () => {
           <p className="text-gray-600">
             Showing {filteredExperts.length} expert{filteredExperts.length !== 1 ? 's' : ''}
             {searchTerm && ` for "${searchTerm}"`}
+            {experts.length === 0 && !isLoading && <span className="text-yellow-600 ml-2">(Demo Data)</span>}
           </p>
         </div>
 
