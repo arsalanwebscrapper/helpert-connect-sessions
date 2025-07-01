@@ -7,100 +7,22 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Star, Search, Filter, Clock, CheckCircle, ArrowLeft } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { expertService } from "@/services/expertService";
+import { useAuth } from "@/hooks/useAuth";
 
 const Experts = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [priceRange, setPriceRange] = useState("all");
+  const { user } = useAuth();
 
-  const experts = [
-    {
-      id: 1,
-      name: "Dr. Sarah Johnson",
-      category: "Mental Health",
-      specialization: "Anxiety & Depression Therapy",
-      experience: 8,
-      rating: 4.9,
-      reviews: 156,
-      price: 75,
-      availability: "online",
-      image: "/placeholder.svg",
-      bio: "Licensed clinical psychologist specializing in cognitive behavioral therapy with over 8 years of experience.",
-      certifications: ["PhD in Psychology", "Licensed Clinical Psychologist", "CBT Certified"]
-    },
-    {
-      id: 2,
-      name: "Arjun Patel",
-      category: "Astrology",
-      specialization: "Vedic Astrology & Birth Charts",
-      experience: 12,
-      rating: 4.8,
-      reviews: 284,
-      price: 50,
-      availability: "online",
-      image: "/placeholder.svg",
-      bio: "Traditional Vedic astrologer with 12+ years of experience in birth chart analysis and life guidance.",
-      certifications: ["Certified Vedic Astrologer", "Sanskrit Scholar", "Jyotish Acharya"]
-    },
-    {
-      id: 3,
-      name: "Lisa Chen",
-      category: "Yoga & Wellness",
-      specialization: "Hatha Yoga & Meditation",
-      experience: 6,
-      rating: 4.9,
-      reviews: 198,
-      price: 60,
-      availability: "online",
-      image: "/placeholder.svg",
-      bio: "Certified yoga instructor and meditation teacher focused on mindfulness and stress relief.",
-      certifications: ["RYT-500 Certified", "Meditation Teacher", "Reiki Master"]
-    },
-    {
-      id: 4,
-      name: "Michael Roberts",
-      category: "Career",
-      specialization: "Career Coaching & Leadership",
-      experience: 15,
-      rating: 4.7,
-      reviews: 342,
-      price: 90,
-      availability: "busy",
-      image: "/placeholder.svg",
-      bio: "Executive coach and career strategist helping professionals achieve their career goals.",
-      certifications: ["ICF Certified Coach", "MBA", "Leadership Development Specialist"]
-    },
-    {
-      id: 5,
-      name: "Dr. Emily Wilson", 
-      category: "Health",
-      specialization: "Nutritional Medicine",
-      experience: 10,
-      rating: 4.8,
-      reviews: 167,
-      price: 85,
-      availability: "online",
-      image: "/placeholder.svg",
-      bio: "Integrative medicine physician specializing in nutrition and preventive healthcare.",
-      certifications: ["MD", "Board Certified", "Functional Medicine Certified"]
-    },
-    {
-      id: 6,
-      name: "Alex Kumar",
-      category: "DevOps",
-      specialization: "Cloud Architecture & DevOps",
-      experience: 7,
-      rating: 4.9,
-      reviews: 89,
-      price: 100,
-      availability: "online",
-      image: "/placeholder.svg",
-      bio: "Senior DevOps engineer and cloud architect with expertise in AWS, Kubernetes, and CI/CD.",
-      certifications: ["AWS Solutions Architect", "Kubernetes Certified", "Docker Expert"]
-    }
-  ];
+  const { data: experts = [], isLoading } = useQuery({
+    queryKey: ['experts'],
+    queryFn: expertService.getExperts,
+  });
 
-  const categories = ["all", "Mental Health", "Astrology", "Yoga & Wellness", "Career", "Health", "DevOps"];
+  const categories = ["all", ...Array.from(new Set(experts.map(expert => expert.category)))];
   const priceRanges = [
     { value: "all", label: "All Prices" },
     { value: "0-50", label: "$0 - $50" },
@@ -110,20 +32,31 @@ const Experts = () => {
   ];
 
   const filteredExperts = experts.filter(expert => {
-    const matchesSearch = expert.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch = expert.user?.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          expert.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          expert.specialization.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesCategory = selectedCategory === "all" || expert.category === selectedCategory;
     
     const matchesPrice = priceRange === "all" || 
-                        (priceRange === "0-50" && expert.price <= 50) ||
-                        (priceRange === "51-75" && expert.price >= 51 && expert.price <= 75) ||
-                        (priceRange === "76-100" && expert.price >= 76 && expert.price <= 100) ||
-                        (priceRange === "100+" && expert.price > 100);
+                        (priceRange === "0-50" && expert.hourly_rate <= 50) ||
+                        (priceRange === "51-75" && expert.hourly_rate >= 51 && expert.hourly_rate <= 75) ||
+                        (priceRange === "76-100" && expert.hourly_rate >= 76 && expert.hourly_rate <= 100) ||
+                        (priceRange === "100+" && expert.hourly_rate > 100);
 
     return matchesSearch && matchesCategory && matchesPrice;
   });
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading experts...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
@@ -143,14 +76,20 @@ const Experts = () => {
               <Link to="/contact" className="text-gray-700 hover:text-blue-600 transition-colors">Contact</Link>
             </div>
             <div className="flex items-center space-x-4">
-              <Link to="/login">
-                <Button variant="ghost" className="text-gray-700 hover:text-blue-600">Login</Button>
-              </Link>
-              <Link to="/register">
-                <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
-                  Sign Up
-                </Button>
-              </Link>
+              {user ? (
+                <span className="text-gray-700">Welcome, {user.email}</span>
+              ) : (
+                <>
+                  <Link to="/login">
+                    <Button variant="ghost" className="text-gray-700 hover:text-blue-600">Login</Button>
+                  </Link>
+                  <Link to="/register">
+                    <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+                      Sign Up
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -225,15 +164,15 @@ const Experts = () => {
                 <div className="flex items-start justify-between">
                   <div className="flex items-center space-x-3">
                     <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                      {expert.name.charAt(0)}
+                      {expert.user?.full_name.charAt(0)}
                     </div>
                     <div>
-                      <CardTitle className="text-lg">{expert.name}</CardTitle>
+                      <CardTitle className="text-lg">{expert.user?.full_name}</CardTitle>
                       <div className="flex items-center mt-1">
                         <Badge variant="secondary" className="text-xs">
                           {expert.category}
                         </Badge>
-                        {expert.availability === "online" ? (
+                        {expert.availability_status === "online" ? (
                           <div className="flex items-center ml-2">
                             <CheckCircle className="h-3 w-3 text-green-500 mr-1" />
                             <span className="text-xs text-green-600">Available</span>
@@ -250,9 +189,9 @@ const Experts = () => {
                   <div className="text-right">
                     <div className="flex items-center">
                       <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                      <span className="ml-1 text-sm font-medium">{expert.rating}</span>
+                      <span className="ml-1 text-sm font-medium">{expert.average_rating.toFixed(1)}</span>
                     </div>
-                    <p className="text-xs text-gray-500">({expert.reviews} reviews)</p>
+                    <p className="text-xs text-gray-500">({expert.total_reviews} reviews)</p>
                   </div>
                 </div>
               </CardHeader>
@@ -267,8 +206,8 @@ const Experts = () => {
                 </p>
                 
                 <div className="flex items-center justify-between text-sm text-gray-600 mb-4">
-                  <span>{expert.experience} years experience</span>
-                  <span className="font-semibold text-blue-600">${expert.price}/session</span>
+                  <span>{expert.experience_years} years experience</span>
+                  <span className="font-semibold text-blue-600">${expert.hourly_rate}/hour</span>
                 </div>
                 
                 <div className="flex gap-2 mb-4">
@@ -293,7 +232,7 @@ const Experts = () => {
                   <Link to={`/expert/${expert.id}/book`} className="flex-1">
                     <Button 
                       className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                      disabled={expert.availability === "busy"}
+                      disabled={expert.availability_status === "busy"}
                     >
                       Book Now
                     </Button>

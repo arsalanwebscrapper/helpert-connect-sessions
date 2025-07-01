@@ -12,6 +12,7 @@ import Experts from "./pages/Experts";
 import ExpertProfile from "./pages/ExpertProfile";
 import Blog from "./pages/Blog";
 import Contact from "./pages/Contact";
+import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ const App = () => (
             <Route path="/register" element={<Register />} />
             <Route path="/experts" element={<Experts />} />
             <Route path="/expert/:id" element={<ExpertProfile />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/contact" element={<Contact />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
