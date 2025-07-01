@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -19,7 +18,7 @@ const Experts = () => {
 
   const { data: experts = [], isLoading } = useQuery({
     queryKey: ['experts'],
-    queryFn: expertService.getExperts,
+    queryFn: () => expertService.getExperts(),
   });
 
   const categories = ["all", ...Array.from(new Set(experts.map(expert => expert.category)))];
